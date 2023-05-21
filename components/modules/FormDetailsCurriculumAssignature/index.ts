@@ -1,0 +1,3 @@
+import FormDetailsCurriculumAssignature from './formDetailsCurriculumAssignature.container'
+
+export default FormDetailsCurriculumAssignature

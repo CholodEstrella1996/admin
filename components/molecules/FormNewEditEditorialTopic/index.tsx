@@ -1,0 +1,3 @@
+import FormNewEditEditorialTopicContainer from './formNewEditEditorialTopic.container'
+
+export default FormNewEditEditorialTopicContainer

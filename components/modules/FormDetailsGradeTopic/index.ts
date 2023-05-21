@@ -1,0 +1,3 @@
+import FormDetailsCurriculumAssignature from './formDetailsGradeTopic.container'
+
+export default FormDetailsCurriculumAssignature

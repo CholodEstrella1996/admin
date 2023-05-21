@@ -1,0 +1,31 @@
+version: '3.5'
+services:
+  cloudlabs-admin-client:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        - NPM_USER=${NPM_USER}
+        - NPM_PASS=${NPM_PASS}
+        - NPM_EMAIL=${NPM_EMAIL}
+        - NPM_SCOPE=@bit
+        - NPM_REGISTRY=https://node.bit.dev/
+    container_name: cloudlabs-admin-client
+    restart: unless-stopped
+    mem_limit: 2048m
+    cpus:  "1"
+    tty: true
+    networks:
+      - network_cloudlabs
+    ports:
+      - "8081:3000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.client_admin.rule=${https_admin}"
+      - "traefik.http.routers.client_admin.entrypoints=websecure"
+      - "traefik.http.routers.client_admin.tls.certresolver=myresolver"
+
+networks:
+  network_cloudlabs:
+    external:
+      name: network_cloudlabs

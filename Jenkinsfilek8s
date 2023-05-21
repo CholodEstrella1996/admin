@@ -1,0 +1,33 @@
+pipeline {
+  agent any
+  stages {
+    stage('Deploy through SSH  ') {
+      steps {
+        script {
+          def remote = [name: 'ubuntu', host: '3.220.130.207', user: 'ubuntu', allowAnyHosts: true]
+          withCredentials([sshUserPrivateKey(credentialsId: 'ec2-dev-cloudlabs', keyFileVariable: 'identity', passphraseVariable: '', usernameVariable: 'ubuntu')]) {
+            remote.user = ubuntu
+            remote.identityFile = identity
+            sshCommand remote: remote, command: 'cd /home/ubuntu/prod-cloudlabs/cloudlabs-admin-backoffice-client ; aws ecr get-login-password --regio us-east-1 | docker login --username AWS --password-stdin 548364670481.dkr.ecr.us-east-1.amazonaws.com/repoprod'
+            sshCommand remote: remote, command: 'cd /home/ubuntu/prod-cloudlabs/cloudlabs-admin-backoffice-client ; aws ecr batch-delete-image --repository-name repoprod --image-ids imageTag=backoffice-client'
+            sshCommand remote: remote, command: 'cd /home/ubuntu/prod-cloudlabs/cloudlabs-admin-backoffice-client ; git checkout master ; git pull'
+            /*sshCommand remote: remote, command: 'cd /home/ubuntu/prod-cloudlabs/cloudlabs-admin-backoffice-client ; docker build -f Dockerfile.admin.backoffice --tag backoffice-client .'*/
+            sshCommand remote: remote, command: 'cd /home/ubuntu/prod-cloudlabs/cloudlabs-admin-backoffice-client/docker ; docker-compose build'
+            sshCommand remote: remote, command: 'cd /home/ubuntu/prod-cloudlabs/cloudlabs-admin-backoffice-client ; docker tag docker_cloudlabs-admin-client:latest 548364670481.dkr.ecr.us-east-1.amazonaws.com/repoprod:backoffice-client'
+            sshCommand remote: remote, command: 'cd /home/ubuntu/prod-cloudlabs/cloudlabs-admin-backoffice-client ; docker push 548364670481.dkr.ecr.us-east-1.amazonaws.com/repoprod:backoffice-client'
+            sshCommand remote: remote, command: 'cd /home/ubuntu/prod-cloudlabs/cloudlabs-admin-backoffice-client ; kubectl rollout restart deployment/deployment-backoffice-client -n prod-namespace'
+            sshCommand remote: remote, command: 'docker system prune -af'
+          }
+        }
+      }
+    }
+  }
+  post {
+      success {
+         mail to:"nsaenz@folcode.com", subject:"SUCCESS: ${currentBuild.fullDisplayName}", body: "Well done is better than well said."
+      }
+      failure {
+         mail to:"nsaenz@folcode.com", subject:"FAILURE: ${currentBuild.fullDisplayName}", body: "Houston, we have a problem here."
+      }   
+    }
+}

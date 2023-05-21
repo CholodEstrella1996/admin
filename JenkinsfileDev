@@ -1,0 +1,28 @@
+pipeline {
+  agent any
+  stages {
+    stage('Deploy through SSH  ') {
+      steps {
+        script {
+          def remote = [name: 'ubuntu', host: '52.73.121.238', user: 'ubuntu', allowAnyHosts: true]
+          withCredentials([sshUserPrivateKey(credentialsId: 'ec2-dev-cloudlabs', keyFileVariable: 'identity', passphraseVariable: '', usernameVariable: 'ubuntu')]) {
+            remote.user = ubuntu
+            remote.identityFile = identity
+            sshCommand remote: remote, command: 'cd /home/ubuntu/cloudlabs-dev-deploy/cloudlabs-admin-backoffice-client ; git checkout development ; git pull'
+            sshCommand remote: remote, command: 'cd /home/ubuntu/cloudlabs-dev-deploy/cloudlabs-admin-backoffice-client/docker ; docker-compose build ; docker-compose up -d'
+            sshCommand remote: remote, command: 'docker system prune -af'
+            sshCommand remote: remote, command: 'cd /home/ubuntu/cloudlabs-dev-deploy/cloudlabs-api ; docker cp my.cnf db:/etc/my.cnf'
+          }
+        }
+      }
+    }
+  }
+  post {
+      success {
+         mail to:"nsaenz@folcode.com", subject:"SUCCESS: ${currentBuild.fullDisplayName}", body: "Well done is better than well said."
+      }
+      failure {
+         mail to:"nsaenz@folcode.com", subject:"FAILURE: ${currentBuild.fullDisplayName}", body: "Houston, we have a problem here."
+      }   
+    }
+}

@@ -1,0 +1,3 @@
+import FormNewEditCurriculoAssignutureContainer from './formNewEditCurriculoAssignuture.container'
+
+export default FormNewEditCurriculoAssignutureContainer
